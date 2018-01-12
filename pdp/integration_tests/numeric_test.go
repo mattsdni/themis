@@ -1358,6 +1358,76 @@ policies:
 	validateTestSuite(ts, t)
 }
 
+func TestAutoscaling(t *testing.T) {
+	ts := testSuite{
+		policies: map[policyFormat]string{
+			YAML: `# Policy set for Autoscaling
+attributes:
+  a: float
+  b: float
+  c: float
+policies:
+  alg: FirstApplicableEffect
+  rules:
+  - id: "Test a in range (b, c)"
+    condition: # c > a > b
+      and:
+      - greater:
+        - attr: a
+        - attr: b
+      - greater:
+        - attr: c
+        - attr: a
+    effect: Permit
+`,
+		},
+		testSet: []testCase{
+			{
+				attrs: []*pb.Attribute{
+					{
+						Id:    "a",
+						Type:  "Float",
+						Value: "10.0",
+					},
+					{
+						Id:    "b",
+						Type:  "Float",
+						Value: "2.0",
+					},
+					{
+						Id:    "c",
+						Type:  "Float",
+						Value: "20.0",
+					},
+				},
+				expected: pdp.EffectPermit,
+			},
+			{
+				attrs: []*pb.Attribute{
+					{
+						Id:    "a",
+						Type:  "Float",
+						Value: "30.0",
+					},
+					{
+						Id:    "b",
+						Type:  "Float",
+						Value: "2.0",
+					},
+					{
+						Id:    "c",
+						Type:  "Float",
+						Value: "20.0",
+					},
+				},
+				expected: pdp.EffectNotApplicable,
+			},
+		},
+	}
+
+	validateTestSuite(ts, t)
+}
+
 func TestFloatAdd(t *testing.T) {
 	ts := testSuite{
 		policies: map[policyFormat]string{
